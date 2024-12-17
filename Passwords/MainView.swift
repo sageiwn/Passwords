@@ -5,7 +5,6 @@
 //  Created by Saglara Sandzhieva on 10/12/24.
 //
 import SwiftUI
-
 struct MainView: View {
     @State private var searchText = ""
     @State private var isGenerateViewActive = false  // Состояние для активации NavigationLink
@@ -79,29 +78,5 @@ struct MainView: View {
                 EmptyView()
             }
         }
-    }
-}
-
-//struct GenerateView: View {
-//    var body: some View {
-//        VStack {
-//            Text("Generate New Password")
-//                .font(.largeTitle)
-//                .padding()
-//
-//            TextField("Generated Password", text: .constant("GeneratedPassword123!"))
-//                .padding()
-//                .textFieldStyle(RoundedBorderTextFieldStyle())
-//                .disabled(true)
-//
-//            Spacer()
-//        }
-//        .padding()
-//    }
-//}
-
-struct MainView_Previews: PreviewProvider {
-    static var previews: some View {
-        MainView()
     }
 }
