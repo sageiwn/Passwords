@@ -6,6 +6,12 @@
 //
 import SwiftUI
 
+extension View {
+    func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
 struct PasswordGeneratorView: View {
     @State private var passwordLength: String = ""
     @State private var includeUppercase: Bool = false
@@ -15,12 +21,12 @@ struct PasswordGeneratorView: View {
     @State private var generatedPassword: String = ""
     @State private var savedPasswords: [PasswordItem] = [] // Хранилище для сохранённых паролей
     @State private var showCopiedAlert: Bool = false // Для отображения уведомления при копировании
-    @State private var selectedCategory: String = "All" // Категория, выбранная пользователем
+    @State private var selectedFolder: String = "All" // Категория, выбранная пользователем
     @State private var siteName: String = "" // Поле для названия сайта
     @State private var notes: String = "" // Поле для заметок
-    
-    
-    let categories = ["All", "Private", "Deleted", "New Group"] // Возможные категории для паролей
+    @FocusState private var isPasswordLengthFieldFocused: Bool // Управление фокусом на текстовом поле
+
+    let folders = ["All", "Private", "Deleted", "New Group"] // Возможные категории для паролей
 
     var body: some View {
         Form {
@@ -34,23 +40,32 @@ struct PasswordGeneratorView: View {
                         .cornerRadius(8)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
+                        .focused($isPasswordLengthFieldFocused) // Управляем фокусом
+                        .toolbar {
+                            ToolbarItemGroup(placement: .keyboard) {
+                                Spacer()
+                                Button("Done") {
+                                    isPasswordLengthFieldFocused = false // Скрываем клавиатуру
+                                }
+                            }
+                        }
                 }
-                
+
                 Toggle("Capital letters", isOn: $includeUppercase)
-                Toggle("Lowercase Letters", isOn: $includeLowercase)
+                Toggle("Lowercase letters", isOn: $includeLowercase)
                 Toggle("Digits", isOn: $includeNumbers)
                 Toggle("Symbols (?!@:+)", isOn: $includeSymbols)
             }
-            
-            Section(header: Text("Category")) {
-                Picker("Select Category", selection: $selectedCategory) {
-                    ForEach(categories, id: \.self) { category in
-                        Text(category)
+
+            Section(header: Text("Folder")) {
+                Picker("Select Folder", selection: $selectedFolder) {
+                    ForEach(folders, id: \.self) { folder in
+                        Text(folder)
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
             }
-            
+
             Section {
                 Button(action: {
                     generatePassword()
@@ -64,7 +79,7 @@ struct PasswordGeneratorView: View {
                 }
                 .listRowBackground(Color.clear)
             }
-            
+
             if !generatedPassword.isEmpty {
                 Section(header: Text("Generated Password")) {
                     HStack {
@@ -72,9 +87,9 @@ struct PasswordGeneratorView: View {
                             .font(.body.monospaced())
                             .foregroundColor(.gray)
                             .padding(.trailing, 8)
-                        
+
                         Spacer()
-                        
+
                         Button(action: {
                             copyToClipboard()
                         }) {
@@ -87,7 +102,7 @@ struct PasswordGeneratorView: View {
                 }
             }
         }
-        .navigationTitle("Password Generator")
+        .navigationTitle("New password")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Save") {
@@ -100,11 +115,12 @@ struct PasswordGeneratorView: View {
             Button("OK", role: .cancel) {}
         }
     }
-    
+
     // Логика генерации пароля
     private func generatePassword() {
         guard let length = Int(passwordLength), length > 0 else {
             generatedPassword = "Please enter a valid length."
+            dismissKeyboard()
             return
         }
 
@@ -132,11 +148,11 @@ struct PasswordGeneratorView: View {
 
     // Логика сохранения пароля
     private func savePassword() {
-        let newPassword = PasswordItem(password: generatedPassword, category: selectedCategory, siteName: siteName, notes: notes)// Сохраняем с выбранной категорией
+        let newPassword = PasswordItem(password: generatedPassword, category: selectedFolder, siteName: siteName, notes: notes) // Сохраняем с выбранной категорией
         savedPasswords.append(newPassword)
         print("Saved passwords: \(savedPasswords)") // Для проверки сохраняем в консоль
     }
-    
+
     // Логика копирования пароля в буфер обмена
     private func copyToClipboard() {
         UIPasteboard.general.string = generatedPassword
